@@ -1,6 +1,3 @@
-// 크리에이터 상세정보 변수 정의 및 변수별 함수 정의
-// require('dotenv').config(); // 환경변수를 위해. dev환경: .env 파일 / production환경: docker run의 --env-file인자로 넘김.
-// const schedule = require('node-schedule');
 const pool = require('../model/connectionPool');
 const { doQuery, doConnectionQuery, doTransacQuery } = require('../model/doQuery');
 const updateFollower = require('./updateFollower');
@@ -537,10 +534,4 @@ async function main() {
 
 }
 
-// const scheduler = schedule.scheduleJob('1 3 * * *', () => {
-//   console.log('creator detail data update start');
-//   main();
-// });
-
 module.exports = main;
-// main();
