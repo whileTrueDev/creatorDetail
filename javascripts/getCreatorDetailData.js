@@ -285,11 +285,13 @@ const getAirtime = ({ connection, creatorId }) => new Promise((resolve, reject) 
   WHERE B.streamerId = ?
   AND time > ?
   `;
+  // 실제 노출시간의 경우, 반드시 3으로 나누어줘야함.
+  // Number((average(airtimeList) / (6 * 3)).toFixed(1));
 
   doConnectionQuery({ connection, queryState: selectQuery, params: [creatorId, startDate] })
     .then((row) => {
       const { airtime } = row[0];
-      resolve(airtime);
+      resolve(Number(Math.round(Number(airtime) / 3)));
     })
     .catch((err) => {
       console.log(`${creatorId}의 실제 방송 시간을 구하는 과정`);
@@ -302,8 +304,9 @@ const getAirtime = ({ connection, creatorId }) => new Promise((resolve, reject) 
 const getImpressiontime = ({ connection, creatorId }) => new Promise((resolve, reject) => {
   const selectQuery = `
   SELECT  COUNT(*) AS impressiontime
-  FROM campaignTimestamp
+  FROM campaignLog
   WHERE creatorId = ?
+  AND type = 'CPM'
   AND date > ?
   `;
 
@@ -326,8 +329,8 @@ const getTimeData = ({ connection, creatorId }) => new Promise((resolve, reject)
     ])
       .then(([airtime, impressiontime]) => {
         let RIP = 0;
-        if (impressiontime !== 0) {
-          RIP = Number((airtime / impressiontime).toFixed(2));
+        if (airtime !== 0) {
+          RIP = Number((impressiontime / airtime).toFixed(2));
           if (RIP >= 1) {
             RIP = 1;
           }
