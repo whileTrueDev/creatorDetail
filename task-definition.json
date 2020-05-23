@@ -56,12 +56,20 @@
                     "name": "DB_USER"
                 },
                 {
-                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/PRODUCTION_CLIENT_ID",
+                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/TWITCH_CLIENT_ID",
                     "name": "PRODUCTION_CLIENT_ID"
                 },
                 {
-                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/PRODUCTION_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/TWITCH_CLIENT_SECRET",
                     "name": "PRODUCTION_CLIENT_SECRET"
+                },
+                {
+                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/TWITCH_CLIENT_ID",
+                    "name": "TWITCH_CLIENT_ID"
+                },
+                {
+                    "valueFrom": "arn:aws:ssm:ap-northeast-2:803609402610:parameter/TWITCH_CLIENT_SECRET",
+                    "name": "TWITCH_CLIENT_SECRET"
                 }
             ],
             "dockerSecurityOptions": null,
