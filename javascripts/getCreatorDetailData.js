@@ -412,10 +412,30 @@ const getCreatorDetail = ({ connection, creatorId }) => new Promise((resolve, re
         })
         .then((params) => {
           if (params.length === 0) {
-            resolve();
-            return;
-          }
-          getCheckDetail({ connection, creatorId })
+            getCheckDetail({ connection, creatorId })
+            .then((check) => {
+              const queryState = `
+              DELETE 
+              FROM creatorDetail
+              WHERE creatorId = ?
+              `;
+              if(check)
+              {
+                doTransacQuery({ connection, queryState, params: [creatorId] })
+                .then(() => {
+                  resolve();
+                })
+                .catch((error) => {
+                  console.log(`${creatorId}의 데이터를 저장하는 과정`);
+                  console.log(error);
+                  resolve();
+                });
+              }else {
+                resolve();
+              }
+            });
+          }else {
+            getCheckDetail({ connection, creatorId })
             .then((check) => {
               const insertQuery = `
               INSERT INTO creatorDetail
@@ -451,6 +471,7 @@ const getCreatorDetail = ({ connection, creatorId }) => new Promise((resolve, re
                   resolve();
                 });
             });
+          }
         });
     })
     .catch((error) => {
