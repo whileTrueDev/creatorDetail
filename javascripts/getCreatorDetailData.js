@@ -1,3 +1,7 @@
+/**
+ * 온애드의 "트위치" 크리에이터 방송에 대한 지표 분석 프로그램입니다.
+ * @author chanuuuuu
+ */
 const pool = require('../model/connectionPool');
 const { doQuery, doConnectionQuery, doTransacQuery } = require('../model/doQuery');
 const updateFollower = require('./updateFollower');
@@ -502,10 +506,10 @@ const getDoQueryCreatorList = () => new Promise((resolve, reject) => {
   const date = new Date();
   date.setDate(date.getDate() - 7);
   const selectQuery = `
-  select creatorId
-  from creatorInfo
-  where date < ?
-  and creatorContractionAgreement = 1
+  SELECT creatorTwitchOriginalId AS creatorId
+  FROM creatorInfo
+  WHERE date < ?
+  AND creatorContractionAgreement = 1
   `;
   doQuery(selectQuery, [date])
     .then((row) => {
