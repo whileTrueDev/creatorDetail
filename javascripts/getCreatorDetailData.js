@@ -7,10 +7,11 @@ const { doQuery, doConnectionQuery, doTransacQuery } = require('../model/doQuery
 const updateFollower = require('./updateFollower');
 
 let startDate;
+const ROWS_PER_ONE_HOUR = 3 * 6; // 트위치 데이터의 경우 1시간에 18회 수집한다. (10분당 3번 요청 -> 60분이면 3 * 6)
 const forEachPromise = (items, fn) => items.reduce((promise, item) => promise.then(() => fn(item)), Promise.resolve());
 
 const getViewerAirtime = ({
-  connection, creatorId
+  connection, creatorId, creatorTwitchOriginalId
 }) => {
   const selectQuery = `
   SELECT  B.streamId, AVG(viewer) AS viewer, COUNT(*) AS airtime, MAX(viewer) AS peakview
@@ -26,7 +27,7 @@ const getViewerAirtime = ({
   const removeOutliner = ({ streamData }) => {
     const cutStreamData = streamData.reduce((acc, element) => {
       // 한시간 이하의 방송은 이상치이므로 제거한다.
-      if (element.airtime > 6 * 3) {
+      if (element.airtime > ROWS_PER_ONE_HOUR) { // 트위치 데이터의 경우 1시간에 18회 수집한다.
         acc.push(element);
       }
       return acc;
@@ -48,7 +49,7 @@ const getViewerAirtime = ({
 
     // 시간의 경우, ROW의 갯수를 COUNT하여 값을 가져오는데, 10분당 3개를 찍으므로 3으로 나눈다.
     // 3개당 10분 이므로, 3을 나눈 갯수 * 10이 실제시간이 되고, 60으로 나누면 시간이 나오게 된다. 평균 방송시간이 나오게 된다.
-    const airtime = Number((average(airtimeList) / (6 * 3)).toFixed(1));
+    const airtime = Number((average(airtimeList) / (ROWS_PER_ONE_HOUR)).toFixed(1));
     const viewer = (Math.round(average(viewerList)));
     const peakview = Math.max(...peakList);
 
@@ -58,7 +59,7 @@ const getViewerAirtime = ({
   };
 
   return new Promise((resolve, reject) => {
-    doConnectionQuery({ connection, queryState: selectQuery, params: [creatorId, startDate] })
+    doConnectionQuery({ connection, queryState: selectQuery, params: [creatorTwitchOriginalId, startDate] })
       .then((row) => {
         if (row.length > 0) {
           const viewData = removeOutliner({ streamData: row });
@@ -75,7 +76,7 @@ const getViewerAirtime = ({
 };
 
 const getContentsPercent = ({
-  connection, creatorId
+  connection, creatorId, creatorTwitchOriginalId
 }) => {
   const selectQuery = `
   SELECT  gameName, C.gameId, timecount
@@ -126,7 +127,7 @@ const getContentsPercent = ({
   };
 
   return new Promise((resolve, reject) => {
-    doConnectionQuery({ connection, queryState: selectQuery, params: [startDate, creatorId] })
+    doConnectionQuery({ connection, queryState: selectQuery, params: [startDate, creatorTwitchOriginalId] })
       .then((row) => {
         if (row.length > 0) {
           const contentsGraphData = preprocessing(row);
@@ -144,7 +145,7 @@ const getContentsPercent = ({
   });
 };
 
-const getOpenHourPercent = ({ connection, creatorId }) => {
+const getOpenHourPercent = ({ connection, creatorId, creatorTwitchOriginalId }) => {
   const getTimeName = (time) => {
     if (time >= 0 && time < 6) {
       return '새벽';
@@ -232,7 +233,7 @@ const getOpenHourPercent = ({ connection, creatorId }) => {
   group by hour(time)`;
 
   return new Promise((resolve, reject) => {
-    doConnectionQuery({ connection, queryState: timeQuery, params: [startDate, creatorId] })
+    doConnectionQuery({ connection, queryState: timeQuery, params: [startDate, creatorTwitchOriginalId] })
       .then((row) => {
         if (row.length > 0) {
           const openHour = countTime({ timeData: row });
@@ -280,7 +281,7 @@ const getClickPercent = ({ connection, creatorId }) => {
 };
 
 // 2. API로 수집된 실제 방송 시간
-const getAirtime = ({ connection, creatorId }) => new Promise((resolve, reject) => {
+const getAirtime = ({ connection, creatorId, creatorTwitchOriginalId }) => new Promise((resolve, reject) => {
   const selectQuery = `
   SELECT  COUNT(*) AS airtime
   FROM twitchStreamDetail AS A
@@ -292,7 +293,7 @@ const getAirtime = ({ connection, creatorId }) => new Promise((resolve, reject) 
   // 실제 노출시간의 경우, 반드시 3으로 나누어줘야함.
   // Number((average(airtimeList) / (6 * 3)).toFixed(1));
 
-  doConnectionQuery({ connection, queryState: selectQuery, params: [creatorId, startDate] })
+  doConnectionQuery({ connection, queryState: selectQuery, params: [creatorTwitchOriginalId, startDate] })
     .then((row) => {
       const { airtime } = row[0];
       resolve(Number(Math.round(Number(airtime) / 3)));
@@ -326,9 +327,9 @@ const getImpressiontime = ({ connection, creatorId }) => new Promise((resolve, r
     });
 });
 
-const getTimeData = ({ connection, creatorId }) => new Promise((resolve, reject) => {
+const getTimeData = ({ connection, creatorId, creatorTwitchOriginalId }) => new Promise((resolve, reject) => {
     Promise.all([
-      getAirtime({ connection, creatorId }),
+      getAirtime({ connection, creatorId, creatorTwitchOriginalId }),
       getImpressiontime({ connection, creatorId })
     ])
       .then(([airtime, impressiontime]) => {
@@ -371,8 +372,8 @@ const getCheckDetail = ({ connection, creatorId }) => new Promise((resolve, reje
 });
 
 
-const getCreatorDetail = ({ connection, creatorId }) => new Promise((resolve, reject) => {
-  getViewerAirtime({ connection, creatorId })
+const getCreatorDetail = ({ connection, creatorId, creatorTwitchOriginalId }) => new Promise((resolve, reject) => {
+  getViewerAirtime({ connection, creatorId, creatorTwitchOriginalId })
     .then((viewData) => {
       resolve();
       if (Object.entries(viewData).length === 0 && viewData.constructor === Object) {
@@ -384,9 +385,9 @@ const getCreatorDetail = ({ connection, creatorId }) => new Promise((resolve, re
       } = viewData;
       Promise.all([
         getClickPercent({ connection, creatorId }),
-        getOpenHourPercent({ connection, creatorId }),
-        getContentsPercent({ connection, creatorId }),
-        getTimeData({ connection, creatorId }),
+        getOpenHourPercent({ connection, creatorId, creatorTwitchOriginalId }),
+        getContentsPercent({ connection, creatorId, creatorTwitchOriginalId }),
+        getTimeData({ connection, creatorId, creatorTwitchOriginalId }),
       ])
         .then(([{ clickCount }, { openHour, timeGraphData }, { content, contentsGraphData }, rip]) => {
           if (viewer === 0 || airtime === 0 || rip == 0) {
@@ -491,7 +492,11 @@ const dividedGetDetail = (targetList) => new Promise((resolve, reject) => {
       reject(err);
     } else {
       Promise.all(
-        targetList.map((creatorId) => getCreatorDetail({ connection, creatorId }))
+        targetList.map((creator) => getCreatorDetail({
+          connection,
+          creatorId: creator.creatorId,
+          creatorTwitchOriginalId: creator.creatorTwitchOriginalId,
+        }))
       ).then(() => {
         connection.release();
         setTimeout(() => {
@@ -505,15 +510,16 @@ const dividedGetDetail = (targetList) => new Promise((resolve, reject) => {
 const getDoQueryCreatorList = () => new Promise((resolve, reject) => {
   const date = new Date();
   date.setDate(date.getDate() - 7);
+  // 아프리카 추가 creatorId가 언제나 streamerId를 의미하지 않으므로, 크리에이터 데이터 추가 by hwasurr 21.01.14
   const selectQuery = `
-  SELECT creatorTwitchOriginalId AS creatorId
+  SELECT creatorId, creatorTwitchOriginalId
   FROM creatorInfo
   WHERE date < ?
   AND creatorContractionAgreement = 1
   `;
   doQuery(selectQuery, [date])
     .then((row) => {
-      const creatorList = row.result.map((element) => element.creatorId);
+      const creatorList = row.result;
       resolve(creatorList);
     })
     .catch((err) => {
