@@ -519,7 +519,7 @@ const getDoQueryCreatorList = () => new Promise((resolve, reject) => {
   SELECT creatorId, creatorTwitchOriginalId
   FROM creatorInfo
   WHERE date < ?
-  AND creatorContractionAgreement = 1 AND creatorId = "102225672"
+  AND creatorContractionAgreement = 1
   `;
   doQuery(selectQuery, [date])
     .then((row) => {
