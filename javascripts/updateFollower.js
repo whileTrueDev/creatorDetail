@@ -6,7 +6,7 @@ const forEachPromise = (items, fn) => items.reduce((promise, item) => promise.th
 const getDetaildoQueryList = () => new Promise((resolve, reject) => {
   const selectQuery = `
   SELECT CI.creatorId, creatorTwitchOriginalId
-  FROM creatorDetail_test AS CD
+  FROM creatorDetail AS CD
   JOIN creatorInfo AS CI
     ON CI.creatorId = CD.creatorId
   `;
@@ -40,7 +40,7 @@ const UpdateFollower = ({
     .then((res) => {
       const followers = res.data.total;
       const queryState = `
-      UPDATE creatorDetail_test 
+      UPDATE creatorDetail 
       SET followers = ?
       WHERE creatorId = ? 
       `;

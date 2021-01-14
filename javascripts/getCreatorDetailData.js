@@ -356,7 +356,7 @@ const getTimeData = ({ connection, creatorId, creatorTwitchOriginalId }) => new 
 const getCheckDetail = ({ connection, creatorId }) => new Promise((resolve, reject) => {
   const selectQuery = `
   SELECT *
-  FROM creatorDetail_test
+  FROM creatorDetail
   WHERE creatorId = ?
   `;
 
@@ -423,7 +423,7 @@ const getCreatorDetail = ({ connection, creatorId, creatorTwitchOriginalId }) =>
             .then((check) => {
               const queryState = `
               DELETE 
-              FROM creatorDetail_test
+              FROM creatorDetail
               WHERE creatorId = ?
               `;
               if(check)
@@ -445,12 +445,12 @@ const getCreatorDetail = ({ connection, creatorId, creatorTwitchOriginalId }) =>
             getCheckDetail({ connection, creatorId })
               .then((check) => {
                 const insertQuery = `
-                INSERT INTO creatorDetail_test
+                INSERT INTO creatorDetail
                 (followers, ctr, airtime, viewer, impression, cost, content, openHour, timeGraphData, contentsGraphData, peakview, rip, creatorId)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `;
                 const updateQuery = `
-                UPDATE creatorDetail_test
+                UPDATE creatorDetail
                 SET 
                 ctr = ?, 
                 airtime = ?, 
