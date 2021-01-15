@@ -80,7 +80,7 @@ const getContentsPercent = ({
   connection, creatorId, creatorTwitchOriginalId
 }) => {
   const selectQuery = `
-  SELECT gameName, C.gameId, timecount
+  SELECT gameName, gameNameKr, C.gameId, timecount
   FROM (SELECT gameId, count(*) as timecount
   FROM twitchStreamDetail AS A
   LEFT JOIN 
@@ -92,7 +92,7 @@ const getContentsPercent = ({
   ON A.streamId = B.streamId
   WHERE B.streamerId = ?
   GROUP BY gameId) AS C
-  LEFT JOIN twitchGame
+  INNER JOIN twitchGame
   ON C.gameId = twitchGame.gameId
     `;
 
@@ -112,7 +112,7 @@ const getContentsPercent = ({
       if (cumsum <= 0.8) {
         cumsum += element.percent;
         result.push({
-          gameName: element.gameName,
+          gameName: element.gameNameKr ? element.gameNameKr : element.gameName,
           percent: element.percent
         });
       }
@@ -120,7 +120,7 @@ const getContentsPercent = ({
     }, []);
 
     returnData.push({
-      gameName: 'Other games',
+      gameName: '기타',
       percent: Number((1 - cumsum).toFixed(2))
     });
 
