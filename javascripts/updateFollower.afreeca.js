@@ -13,6 +13,7 @@ const getDetaildoQueryList = () => new Promise((resolve, reject) => {
   const selectQuery = `
   SELECT CI.creatorId, afreecaId FROM creatorDetailAfreeca AS CDA
   JOIN creatorInfo AS CI ON CI.creatorId = CDA.creatorId
+  WHERE afreecaId IS NOT NULL
   `;
   doQuery(selectQuery)
     .then((row) => {
